@@ -7,7 +7,6 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -31,41 +30,32 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        // $request->authenticate();
-
-        // $request->session()->regenerate();
-
-        // return redirect()->intended(route('dashboard', absolute: false));
-
         $credentials = $request->only('email', 'password');
 
         if (! $token = JWTAuth::attempt($credentials)) {
             return back()->withErrors(['email' => 'Invalid credentials']);
         }
 
-        // Step 1: Send token to foodpanda-app via POST request
-        $response = Http::post(env('FOODPANDA_URL').'/auth/consume-token', [
-            'token' => $token,
-        ]);
+        $user = JWTAuth::user();
+        Auth::login($user);
 
-        if ($response->status() !== 200) {
-            return back()->withErrors(['login' => 'Failed to log in to foodpanda']);
-        }
+        $request->session()->put('foodpanda_token', $token);
 
-        // Step 2: Proceed to ecommerce dashboard (no redirect)
         return redirect()->intended('/dashboard');
     }
 
     /**
      * Destroy an authenticated session.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request)
     {
-        Auth::guard('web')->logout();
-
+        Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return Inertia::render('Logout', [
+            'foodpanda_logout_url' => env('VITE_FOODPANDA_URL') . '/iframe/auth/logout'
+        ]);
     }
+
 }

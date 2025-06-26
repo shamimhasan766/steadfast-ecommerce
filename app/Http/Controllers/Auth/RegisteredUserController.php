@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class RegisteredUserController extends Controller
 {
@@ -44,7 +45,15 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
+        $credentials = $request->only('email', 'password');
+        if (! $token = JWTAuth::attempt($credentials)) {
+            return back()->withErrors(['email' => 'Invalid credentials']);
+        }
+
+        $user = JWTAuth::user();
         Auth::login($user);
+
+        $request->session()->put('foodpanda_token', $token);
 
         return redirect()->intended(route('dashboard', absolute: false));
     }
