@@ -12,3 +12,4 @@ you can create new account for test in two website ecommerce and foodpanda.
 1. multi authentication app .
 2. when any user login or register in ecommerce app than user will also logged in to foodpanda app...
 3. and when logout from ecommere app than also logged out from foodpanda app.
+4. the design is inspired from a template.
